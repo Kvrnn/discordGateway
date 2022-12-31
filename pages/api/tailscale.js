@@ -29,9 +29,24 @@ const { handler } = require('../../middleware/handler');
  *
  * The Discord webhook event types are the keys, and the Tailscale webhook event types are the values.
  */
-let variables = {
+// This contains variables that are hardcoded.
+const hardCodedValues = {
     username: 'Tailscale',
     avatar_url: 'https://avatars.githubusercontent.com/u/48932923',
+}
+
+// This is an object that maps the Tailscale webhook event types to the corresponding Discord webhook event types.
+// The Discord webhook event types are the keys, and the Tailscale webhook event types are the values.
+// For mulitdimensional arrays, the code supports . notation. Such that, if you have a json object like this:
+// {
+//   "a": {
+//     "b": {
+//       "c": "d"
+//     }
+//   }
+// }
+// You can access the value of "c" by using "a.b.c" as the key.
+let tailscaleToDiscordMap = {
     content: 'message',
     embeds: [
         {
@@ -46,28 +61,25 @@ let webhookURL = process.env.DISCORD_WEBHOOK_URL;
 
 export default async (req, res) => {
     // Destructure the content, username, avatar_url, and embeds properties from the request body
-    const { content, username, avatar_url, embeds } = handler(req, res, variables, async (variables) =>
+    const discordObject = handler(req.body, tailscaleToDiscordMap, hardCodedValues,  (variables) =>
         // Log missing variables to the console
         console.log(`Missing variables: ${variables}`)
     );
 
-    // Create the discordObject object
-    const discordObject = {
-        content,
-        username,
-        avatar_url,
-        embeds,
-    }
-
     // Send a POST request to the Discord endpoint with the discordObject as the request body
-    const response = await axios.post('/api/discord', discordObject);
-
-    // If the response status is 204, return a success message to the client
-    if (response.status === 204) {
-        res.status(200).send('Message successfully sent to Discord');
-    }
-    // Otherwise, return a server error message to the client
-    else {
-        res.status(500).send('Error sending message to Discord');
-    }
+    axios.post('/api/discord/', discordObject, {
+        baseURL: "http://localhost:3000",
+    })
+        .then((response) => {
+            if (response.status === 200) {
+                res.status(200).send('Message successfully sent to Discord');
+            }
+            else {
+                res.status(400).send('Error sending message to Discord');
+            }
+        })
+        .catch((error) => {
+            // If there was an error sending the request, return a server error message to the client
+            res.status(500).send(error);
+        });
 }

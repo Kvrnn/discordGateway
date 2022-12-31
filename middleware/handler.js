@@ -12,18 +12,19 @@ const {isDiscordWebhook} = require('./validator')
  * @return {any} The value at the specified path in the object, or null if the path is not present in the object.
  */
 export function disassembleAndFind(json, targetKey) {
-    if (!json || typeof json !== 'object') return null;
-
-    const keys = targetKey.split(".");
-    let value = json;
-    for (const key of keys) {
-        if (value.hasOwnProperty(key)) {
-            value = value[key];
-        } else {
-            return null;
+    if (!targetKey.includes('.')) {
+        return json[targetKey];
+    } else {
+        const keys = targetKey.split('.');
+        let current = json;
+        for (let i = 0; i < keys.length; i++) {
+            if (current[keys[i]] === undefined) {
+                return null;
+            }
+            current = current[keys[i]];
         }
+        return current;
     }
-    return value;
 }
 
 /**
@@ -53,29 +54,47 @@ export function assembler(json, targetKey, value) {
 /**
  * Searches a given json object for a list of specified variables, and returns an array of the values found. If a callback function is provided, it is called with an array of the variables that were not found.
  *
- * @param {Object} json - The object to search.
- * @param {string[]} variables - An array of strings representing the paths to the values to search for, with each key in the path separated by a period.
+ * @param req
+ * @param objectMap
+ * @param hardcodedValues
  * @param {Function} [callback] - An optional callback function to be called with an array of the variables that were not found.
- * @param {string} [defaultValue=""] - An optional default value to use if a variable is not found.
  * @return {any[]} An array of the values found for the specified variables.
  */
-export function handler(json, variables, callback, defaultValue="") {
-    if (!json || typeof json !== 'object') return null;
+export function handler(reqBody, objectMap, hardcodedValues, callback) {
+    let discordObject = {
+        content: null,
+        username: null,
+        avatar_url: null,
+        embeds: null,
+    }
+    let missingVariables = [];
 
-    const result = [];
-    const missing = [];
-    for (const variable of variables) {
-        const value = disassembleAndFind(json, variable);
-        if (value !== null) {
-            result.push(value);
-        } else {
-            missing.push(variable);
+    for (const [discordKey, discordValue] of Object.entries(discordObject)) {
+        // Sets the hardcoded value if it exists
+        for (const [hardcodedKey, hardcodedValue] of Object.entries(hardcodedValues)) {
+            if (discordKey === hardcodedKey && discordValue === null) {
+                discordObject[discordKey] = hardcodedValue;
+            }
+        }
+
+        // Sets the value from the request body if it exists
+        for (const [mappedKey, mappedValue] of Object.entries(objectMap)) {
+            if (discordKey === mappedKey && discordValue === null) {
+                const value = disassembleAndFind(reqBody, mappedValue);
+                if (value) {
+                    discordObject[discordKey] = value;
+                } else {
+                    missingVariables.push(mappedValue);
+                }
+            }
         }
     }
-    if (callback) {
-        callback(missing);
+
+    if (missingVariables.length > 0 && callback) {
+        callback(missingVariables)
     }
-    return result;
+
+    return discordObject;
 }
 
 /**
