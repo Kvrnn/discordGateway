@@ -2,7 +2,7 @@
  * This script does something that I forgot.
  *
  */
-const {isDiscordWebhook} = require('./validator.mjs')
+const {isDiscordWebhook} = require('./validator')
 
 /**
  * Disassembles a targetKey string and searches for the corresponding value in a given json object.
@@ -82,15 +82,16 @@ export function handler(json, variables, callback, defaultValue="") {
  * Extracts webhookID and webhookToken from a Discord webhook URL
  *
  * @param url
+ * @param callback
  * @returns {{webhookId: *, webhookToken: *}}
  */
-export function extractWebhookIdAndToken(url) {
+export function extractWebhookIdAndToken(url, callback) {
     if (!isDiscordWebhook(url)) {
-        throw new Error(`Invalid Discord webhook URL: ${url}`);
+        return callback(`Invalid Discord webhook URL: ${url}`);
     }
 
-    const webhookId = url.split('/')[6];
-    const webhookToken = url.split('/')[7];
+    const webhookID = url.split('/')[5];
+    const webhookToken = url.split('/')[6];
 
-    return { webhookId, webhookToken };
+    return { webhookID, webhookToken };
 }

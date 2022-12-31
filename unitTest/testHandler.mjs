@@ -1,4 +1,4 @@
-import {assembler, disassembleAndFind, handler} from "../middleware/handler.mjs";
+import {assembler, disassembleAndFind, handler} from "../middleware/handler.js";
 
 const req = {
     method: "GET",
