@@ -54,47 +54,35 @@ export function assembler(json, targetKey, value) {
 /**
  * Searches a given json object for a list of specified variables, and returns an array of the values found. If a callback function is provided, it is called with an array of the variables that were not found.
  *
- * @param reqBody
- * @param objectMap
- * @param hardcodedValues
- * @param {Function} [callback] - An optional callback function to be called with an array of the variables that were not found.
+ * @param dataGiven
+ * @param dataWanted
+ * @param callback - A function to call if any of the variables are not found.
  * @return {any[]} An array of the values found for the specified variables.
  */
-export function handler(reqBody, objectMap, hardcodedValues, callback) {
-    let discordObject = {
-        content: null,
-        username: null,
-        avatar_url: null,
-        embeds: null,
-    }
+export function handler(dataGiven, dataWanted, callback) {
     let missingVariables = [];
 
-    for (const [discordKey, discordValue] of Object.entries(discordObject)) {
-        // Sets the hardcoded value if it exists
-        for (const [hardcodedKey, hardcodedValue] of Object.entries(hardcodedValues)) {
-            if (discordKey === hardcodedKey && discordValue === null) {
-                discordObject[discordKey] = hardcodedValue;
-            }
+    for (const key in dataWanted) {
+        // If there is a hardcoded value, skip this key
+        if (dataWanted[key] != undefined || dataWanted[key] != null) {
+            continue;
         }
 
-        // Sets the value from the request body if it exists
-        for (const [mappedKey, mappedValue] of Object.entries(objectMap)) {
-            if (discordKey === mappedKey && discordValue === null) {
-                const value = disassembleAndFind(reqBody, mappedValue);
-                if (value) {
-                    discordObject[discordKey] = value;
-                } else {
-                    missingVariables.push(mappedValue);
-                }
-            }
+        if (dataGiven[key] === undefined || dataGiven[key] === null) {
+            console.log(`dataGiven[${key}] is undefined or null`);
+        }
+
+        if (dataGiven.hasOwnProperty(key) && dataGiven[key] !== undefined && dataGiven[key] !== null) {
+            dataWanted[key] = dataGiven[key];
+        } else {
+            missingVariables.push(key);
+            dataWanted[key] = "Not Found";
         }
     }
-
-    if (missingVariables.length > 0 && callback) {
-        callback(missingVariables)
+    if(missingVariables.length > 0 && callback){
+        callback(missingVariables);
     }
-
-    return discordObject;
+    return dataWanted;
 }
 
 /**

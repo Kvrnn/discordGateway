@@ -30,15 +30,31 @@
 const axios = require('axios');
 // Import the DiscordObject class
 const DiscordObject  = require('../../middleware/discordObject');
+// Import the handler function
+const { handler } = require('../../middleware/handler');
 
 export default async (req, res) => {
     // || \\ // || \\ // || \\ START EDITING // || \\ // || \\ // || \\
-    // If your data is json formatted, you can destructure it like this:
-    // If it's not then you can use a helper function extractKeys() to get a list of all possible keys.
-    // Note that the helper function is still under development and may not work as expected.
-    let {timestamp, version, type, tailnet, message, data} = req.body;
-    // If you need to access a nested object, you can destructure it like this:
-    let {nodeID, url, deviceName, managedBy, actor} = data;
+
+    // This object represents the data you want to send to Discord
+    // You can hardcode values here by setting them to anything but null or undefined.
+    let data = {
+        "timestamp":null,
+        "version": null,
+        "type": null,
+        "tailnet": null,
+        "message": null,
+        "data":{
+            "nodeID": null,
+            "url": null,
+            "deviceName": null,
+            "managedBy": null,
+            "actor": null,
+        }
+    }
+    // The handler helper function will try to fill in the data object with the data from the request body.
+    // If the data is not present, it will be set to 'Not Found'
+    data = handler(req.body, data)
 
     const discordObject = new DiscordObject();
 
@@ -46,21 +62,19 @@ export default async (req, res) => {
     discordObject.setUserName("TailScale");
     discordObject.setAvatarUrl("https://avatars.githubusercontent.com/u/48932923");
 
-    // For a webhook, you must have either an embed or a message. You can have both, but you cannot send an empty webhook.
-
     // Add a message to the webhook
     discordObject.setContent("This is a test message");
 
     // Add an embed to the webhook. You can add upto 10 embeds per webhook.
     discordObject.addEmbed(
         {
-            title: `Tailnet: ${tailnet}`,
-            url: url,
-            description: `NodeID: ${nodeID}\n${message} by ${actor} \nVersion: ${version} \nType: ${type}`,
+            title: `Tailnet: ${data.tailnet}`,
+            url: data.data.url,
+            description: `NodeID: ${data.data.nodeID}\n${data.message} by ${data.data.actor} \nVersion: ${data.version} \nType: ${data.type}`,
             footer: {
-                text: `Device Name: ${deviceName} | Managed By: ${managedBy}`,
+                text: `Device Name: ${data.data.deviceName} | Managed By: ${data.data.managedBy}`,
             },
-            timestamp: timestamp,
+            timestamp: data.timestamp,
         }
     )
     // || \\ // || \\ // || \\ STOP EDITING // || \\ // || \\ // || \\

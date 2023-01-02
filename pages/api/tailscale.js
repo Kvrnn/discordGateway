@@ -28,11 +28,25 @@
 const axios = require('axios');
 // Import the DiscordObject class
 const DiscordObject  = require('../../middleware/discordObject');
+// Import the handler function
+const { handler } = require('../../middleware/handler');
 
-// || \\ // || \\ // || \\ STOP EDITING // || \\ // || \\ // || \\
 export default async (req, res) => {
-    let {timestamp, version, type, tailnet, message, data} = req.body;
-    let {nodeID, url, deviceName, managedBy, actor} = data;
+    let data = {
+        "timestamp":null,
+        "version": null,
+        "type": null,
+        "tailnet": null,
+        "message": null,
+        "data":{
+            "nodeID": null,
+            "url": null,
+            "deviceName": null,
+            "managedBy": null,
+            "actor": null,
+        }
+    }
+    data = handler(req.body, data)
 
     const discordObject = new DiscordObject();
 
@@ -41,13 +55,13 @@ export default async (req, res) => {
 
     discordObject.addEmbed(
         {
-            title: `Tailnet: ${tailnet}`,
-            url: url,
-            description: `NodeID: ${nodeID}\n${message} by ${actor} \nVersion: ${version} \nType: ${type}`,
+            title: `Tailnet: ${data.tailnet}`,
+            url: data.data.url,
+            description: `NodeID: ${data.data.nodeID}\n${data.message} by ${data.data.actor} \nVersion: ${data.version} \nType: ${data.type}`,
             footer: {
-                text: `Device Name: ${deviceName} | Managed By: ${managedBy}`,
+                text: `Device Name: ${data.data.deviceName} | Managed By: ${data.data.managedBy}`,
             },
-            timestamp: timestamp,
+            timestamp: data.timestamp,
         }
     )
 
