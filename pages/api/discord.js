@@ -1,7 +1,7 @@
 /**
  * ./api/discord.js
- * Accepts: Discord formatted webhook requests with/without a webhookURL variable
- * Sends: Discord formatted webhook requests to the specified webhookURL or the default webhookURL
+ * Accepts: Discord formatted webhook
+ * Sends: Discord formatted webhook
  * Returns: 200 OK
  * */
 
@@ -15,17 +15,11 @@
  *   }
  * ]
  * */
-const {extractWebhookIdAndToken} = require('../../middleware/handler')
-
-let variables = {
-    content: "content",
-    username: "username",
-    avatar_url: "avatar_url",
-    embeds: "embeds",
-}
 
 // Import the Axios library
 const axios = require('axios');
+// Import a helper
+const { extractWebhookIdAndToken } = require('../../middleware/handler')
 
 // Define the default export as an async function
 export default async (req, res) => {
@@ -38,19 +32,8 @@ export default async (req, res) => {
         console.log(error); // should log 'Invalid Discord webhook URL: invalid_url'
     });
 
-    // Destructure the content, username, avatar_url, and embeds properties from the request body
-    const { content, username, avatar_url, embeds } = req.body;
-
-    // Create the discordObject object
-    const discordObject = {
-        content,
-        username,
-        avatar_url,
-        embeds,
-    };
-
 // Send a POST request to the Discord webhook URL with the discordObject as the request body
-    axios.post(`https://discord.com/api/webhooks/${webhookID}/${webhookToken}`, discordObject)
+    axios.post(`https://discord.com/api/webhooks/${webhookID}/${webhookToken}`, req.body)
         .then((response) => {
             // If the response status is 204, return a success message to the client
             if (response.status === 204) {

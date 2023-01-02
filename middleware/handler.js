@@ -54,7 +54,7 @@ export function assembler(json, targetKey, value) {
 /**
  * Searches a given json object for a list of specified variables, and returns an array of the values found. If a callback function is provided, it is called with an array of the variables that were not found.
  *
- * @param req
+ * @param reqBody
  * @param objectMap
  * @param hardcodedValues
  * @param {Function} [callback] - An optional callback function to be called with an array of the variables that were not found.
@@ -113,4 +113,21 @@ export function extractWebhookIdAndToken(url, callback) {
     const webhookToken = url.split('/')[6];
 
     return { webhookID, webhookToken };
+}
+
+/**
+ * Extracts all possible keys from an object
+ *
+ * @param {Object} obj - The object to extract keys from
+ * @returns {string[]} An array of all possible keys
+ * */
+function extractKeys(obj) {
+    let keys = [];
+    for (let key in obj) {
+        keys.push(key);
+        if (typeof obj[key] === 'object') {
+            keys = keys.concat(extractKeys(obj[key]));
+        }
+    }
+    return keys;
 }

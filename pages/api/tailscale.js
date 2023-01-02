@@ -1,74 +1,59 @@
 /**
  * ./api/tailscale.js
  * Accepts: Tailscale formatted webhook requests
- * Sends: Discord formatted webhook requests
+ * Sends: Discord Object to /api/discord
  * Returns: 200 OK
  * */
 
 /** Example of json data
  * [
  *   {
- *     timestamp: '2022-12-17T17:36:41.918053157Z',
+ *     timestamp: '2022-12-31T16:28:21.819854938Z',
  *     version: 1,
- *     type: 'test',
- *     tailnet: '<name of tailnet>',
- *     message: 'This is a test event',
- *     data: null
+ *     type: 'nodeAuthorized',
+ *     tailnet: '<tailnetName>',
+ *     message: 'Node <nameOfNode> authorized',
+ *     data: {
+ *       nodeID: '<>',
+ *       url: 'https://login.tailscale.com/admin/machines/<ipaddressOfNode>',
+ *       deviceName: '<>.ts.net',
+ *       managedBy: '<>',
+ *       actor: '<nameOfExecutor>'
+ *     }
  *   }
  * ]
  * */
 
 // Import the Axios library
 const axios = require('axios');
-// Import the handler middleware
-const { handler } = require('../../middleware/handler');
+// Import the DiscordObject class
+const DiscordObject  = require('../../middleware/discordObject');
 
-// || \\ // || \\ // || \\ EDIT SECTION BELOW // || \\ // || \\ // || \\
-/**
- * An object that maps the Tailscale webhook event types to the corresponding Discord webhook event types.
- *
- * The Discord webhook event types are the keys, and the Tailscale webhook event types are the values.
- */
-// This contains variables that are hardcoded.
-const hardCodedValues = {
-    username: 'Tailscale',
-    avatar_url: 'https://avatars.githubusercontent.com/u/48932923',
-}
-
-// This is an object that maps the Tailscale webhook event types to the corresponding Discord webhook event types.
-// The Discord webhook event types are the keys, and the Tailscale webhook event types are the values.
-// For mulitdimensional arrays, the code supports . notation. Such that, if you have a json object like this:
-// {
-//   "a": {
-//     "b": {
-//       "c": "d"
-//     }
-//   }
-// }
-// You can access the value of "c" by using "a.b.c" as the key.
-let tailscaleToDiscordMap = {
-    content: 'message',
-    embeds: [
-        {
-            title: 'data.title',
-            content: 'data.message',
-        }
-    ],
-}
-// If you want to use a specific webhook URL, add it here (otherwise, it will use the default webhook URL)
-let webhookURL = process.env.DISCORD_WEBHOOK_URL;
 // || \\ // || \\ // || \\ STOP EDITING // || \\ // || \\ // || \\
-
 export default async (req, res) => {
-    // Destructure the content, username, avatar_url, and embeds properties from the request body
-    const discordObject = handler(req.body, tailscaleToDiscordMap, hardCodedValues,  (variables) =>
-        // Log missing variables to the console
-        console.log(`Missing variables: ${variables}`)
-    );
+    let {timestamp, version, type, tailnet, message, data} = req.body;
+    let {nodeID, url, deviceName, managedBy, actor} = data;
+
+    const discordObject = new DiscordObject();
+
+    discordObject.setUserName("TailScale");
+    discordObject.setAvatarUrl("https://avatars.githubusercontent.com/u/48932923");
+
+    discordObject.addEmbed(
+        {
+            title: `Tailnet: ${tailnet}`,
+            url: url,
+            description: `NodeID: ${nodeID}\n${message} by ${actor} \nVersion: ${version} \nType: ${type}`,
+            footer: {
+                text: `Device Name: ${deviceName} | Managed By: ${managedBy}`,
+            },
+            timestamp: timestamp,
+        }
+    )
 
     // Send a POST request to the Discord endpoint with the discordObject as the request body
-    axios.post('/api/discord/', discordObject, {
-        baseURL: "http://localhost:3000",
+    axios.post('/api/discord/', discordObject.toJSON(), {
+        baseURL: process.env.baseURL,
     })
         .then((response) => {
             if (response.status === 200) {
