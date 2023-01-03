@@ -68,7 +68,7 @@ export default async (req, res) => {
     res.status(200).send('Message successfully sent to Discord');
 
     // Send a POST request to the Discord endpoint with the discordObject as the request body
-    axios.post('/api/discord/', discordObject.toJSON(), {
+    await axios.post('/api/discord/', discordObject.toJSON(), {
         baseURL: process.env.baseURL,
     })
         .then((response) => {
