@@ -12,7 +12,7 @@ function isValidTimestamp(timestamp) {
     return regex.test(timestamp);
 }
 
-allowedEmbedKeys = [
+const allowedEmbedKeys = [
     'color',
     'author',
     'title',
