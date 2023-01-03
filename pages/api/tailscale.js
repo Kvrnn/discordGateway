@@ -67,12 +67,11 @@ export default async (req, res) => {
 
     res.status(200).send('Message successfully sent to Discord');
 
-    // Send a POST request to the Discord endpoint with the discordObject as the request body
-    await axios.post('/api/discord/', discordObject.toJSON(), {
-        baseURL: process.env.baseURL,
-    })
+    // Send a POST request to the Discord webhook URL with the discordObject as the request body
+    await axios.post(`https://discord.com/api/webhooks/${webhookID}/${webhookToken}`, discordObject.toJSON())
         .then((response) => {
-            if (response.status === 200) {
+            // If the response status is 204, return a success message to the client
+            if (response.status === 204) {
                 res.status(200).send('Message successfully sent to Discord');
             }
             else {
@@ -83,4 +82,22 @@ export default async (req, res) => {
             // If there was an error sending the request, return a server error message to the client
             res.status(500).send(error);
         });
+
+    // Small brain and serverless functions not responding to its own request.
+    // // Send a POST request to the Discord endpoint with the discordObject as the request body
+    // await axios.post('/api/discord/', discordObject.toJSON(), {
+    //     baseURL: process.env.baseURL,
+    // })
+    //     .then((response) => {
+    //         if (response.status === 200) {
+    //             res.status(200).send('Message successfully sent to Discord');
+    //         }
+    //         else {
+    //             res.status(400).send('Error sending message to Discord');
+    //         }
+    //     })
+    //     .catch((error) => {
+    //         // If there was an error sending the request, return a server error message to the client
+    //         res.status(500).send(error);
+    //     });
 }
