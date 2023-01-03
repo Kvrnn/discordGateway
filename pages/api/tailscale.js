@@ -5,6 +5,8 @@
  * Returns: 200 OK
  * */
 
+import {extractWebhookIdAndToken} from "../../middleware/handler";
+
 /** Example of json data
  * [
  *   {
@@ -66,6 +68,12 @@ export default async (req, res) => {
     )
 
     res.status(200).send('Message successfully sent to Discord');
+
+    let webhookURL = req.body.webhookURL || process.env.DISCORD_WEBHOOK_URL;
+
+    let { webhookID, webhookToken } = extractWebhookIdAndToken(webhookURL, (error) => {
+        console.log(error); // should log 'Invalid Discord webhook URL: invalid_url'
+    });
 
     // Send a POST request to the Discord webhook URL with the discordObject as the request body
     await axios.post(`https://discord.com/api/webhooks/${webhookID}/${webhookToken}`, discordObject.toJSON())
